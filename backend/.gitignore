@@ -1,13 +1,2 @@
-# Virtual Environment
-polaris/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# IDE files
-.vscode/
-.idea/
-
-# Environment variables
-.env
+venv
+your-firebase-service-account.json
