@@ -1,16 +1,17 @@
+// /frontend/src/lib/firebase.ts
+// This code is correct and will work after you fix the .env file.
+
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Firebase configuration
-// TODO: Replace with your actual Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyDXopWZNli9AktwpqBGZGA6uMOunK_utvA",
-  authDomain: "north-star-3d114.firebaseapp.com",
-  projectId: "north-star-3d114",
-  storageBucket: "north-star-3d114.firebasestorage.app",
-  messagingSenderId: "740266100852",
-  appId: "1:740266100852:web:031c639826c51e51a2a921"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);

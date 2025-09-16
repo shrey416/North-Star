@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import SplitText from '@/components/ui/SplitText';
 
 const Home = () => {
   const { user } = useAuth();
@@ -16,10 +17,22 @@ const Home = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-slide-up">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-              Find Your{' '}
-              <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse-glow">
+              <SplitText
+                text="Find Your North Star"
+                className="text-purple-600 from-primary via-accent to-primary bg-clip-text text-transparent text-center"
+                delay={100}
+                duration={0.4}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, x: 40 }}
+                to={{ opacity: 1, x: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="center"
+              />
+              {/* <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse-glow">
                 North Star
-              </span>
+              </span> */}
             </h1>
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-muted-foreground mb-8">
               Navigate Your Career Path

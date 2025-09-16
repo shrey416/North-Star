@@ -5,20 +5,16 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  onIdTokenChanged, // Use this to listen for token changes
+  onIdTokenChanged,
   updateProfile
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore'; 
-import { auth, googleProvider, db } from '@/lib/firebase'; 
+import { auth, googleProvider } from '@/lib/firebase'; // Assuming your firebase config is here
 import { useToast } from '@/hooks/use-toast';
-
-// The URL for your FastAPI backend
-const API_URL = 'http://127.0.0.1:8000';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password:string, name: string) => Promise<User | null>;
+  signUp: (email: string, password: string, name: string) => Promise<User | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -44,35 +40,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // onIdTokenChanged is more robust than onAuthStateChanged for session management
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        const token = await user.getIdToken();
-
-        // Send the token to the backend to set the session cookie
-        try {
-          await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-          });
-        } catch (error) {
-          console.error("Failed to set session cookie:", error);
-          // Handle error appropriately, maybe log the user out
-        }
-
-      } else {
-        setUser(null);
-        // On sign out, ensure the backend session is also cleared
-        try {
-          await fetch(`${API_URL}/api/auth/logout`, { method: 'POST' });
-        } catch (error) {
-          console.error("Failed to clear session cookie:", error);
-        }
-      }
+    // onIdTokenChanged is robust for handling auth state and token refreshes.
+    const unsubscribe = onIdTokenChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
     });
+    // Cleanup subscription on unmount
     return unsubscribe;
   }, []);
   
@@ -80,27 +53,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       
+      // Update the Firebase Auth profile with the user's name
       if (name && result.user) {
         await updateProfile(result.user, { displayName: name });
       }
 
-      if (result.user) {
-        const userDocRef = doc(db, 'users', result.user.uid);
-        await setDoc(userDocRef, {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: name,
-          createdAt: new Date(),
-          age: null,
-          dob: null,
-          education: [],
-          experience: [],
-          interests: [],
-          interestedFields: [],
-          blacklistedFields: [],
-          profileComplete: false,
-        });
-      }
+      // NOTE: User creation in the PostgreSQL database is now handled by the backend.
+      // The first authenticated API call from a new user will trigger their profile creation.
 
       toast({
         title: "Welcome to North Star!",
@@ -119,27 +78,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
       
-      const userDocRef = doc(db, 'users', result.user.uid);
-      const docSnap = await getDoc(userDocRef);
-
-      if (!docSnap.exists()) {
-        await setDoc(userDocRef, {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName,
-          createdAt: new Date(),
-          age: null,
-          dob: null,
-          education: [],
-          experience: [],
-          interests: [],
-          interestedFields: [],
-          blacklistedFields: [],
-          profileComplete: false,
-        });
-      }
+      // NOTE: User creation/check in PostgreSQL is handled by the backend.
 
       toast({
         title: "Welcome to North Star!",
@@ -174,7 +115,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      // This will trigger the onIdTokenChanged listener, which handles backend logout
       await signOut(auth); 
       toast({
         title: "Signed out",
@@ -201,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

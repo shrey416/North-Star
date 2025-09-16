@@ -1,5 +1,8 @@
 fastapi
-uvicorn
+uvicorn[standard]
+firebase-admin
 python-dotenv
-firebase_admin
 pydantic
+SQLAlchemy
+asyncpg
+psycopg2-binary
