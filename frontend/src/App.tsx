@@ -18,6 +18,7 @@ import ProfilePage from './pages/Profile';
 import { AuthProvider } from "./contexts/AuthContext";
 import ShootingStars from "./components/ShootingStars";
 import { ThemeProvider } from "./providers/ThemeProvider";
+import SkillAssessment from './pages/SkillAssessment'; // <-- IMPORT
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const AppContent = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/assessment/:assessmentId" element={<SkillAssessment />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EducationEntry, ExperienceEntry } from '@/types';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { SkillsManager } from '@/components/SkillsManager';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'; // <-- IMPORT
 
 const institutionOptions = INDIAN_INSTITUTIONS.map(name => ({ value: name, label: name }));
 const degreeOptions = COMMON_DEGREES.map(name => ({ value: name, label: name }));
@@ -25,6 +26,7 @@ const interestOptions = INTERESTS.map(interest => ({ value: interest, label: int
 const ProfilePage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const authenticatedFetch = useAuthenticatedFetch(); // <-- USE THE HOOK
   
   const [personalInfo, setPersonalInfo] = useState({ displayName: '', age: '', dob: '' });
   const [studyStatus, setStudyStatus] = useState('');
@@ -39,23 +41,31 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (user) {
-      setLoading(true);
-      // TODO: Replace with authenticatedFetch('/users/me')
-      // MOCK DATA FETCH
       const fetchProfile = async () => {
-        console.log("Fetching profile for user:", user.uid);
-        // Simulate API call
-        await new Promise(res => setTimeout(res, 500)); 
-        setPersonalInfo({ displayName: user.displayName || '', age: '25', dob: '1999-01-01' });
-        setStudyStatus('Undergraduate (College)');
-        setEducation([]);
-        setExperience([]);
-        setCareerInterests({ interestedFields: [], interests: [], blacklistedFields: [] });
-        setLoading(false);
+        setLoading(true);
+        try {
+          // --- FETCH FROM BACKEND ---
+          const data = await authenticatedFetch('/users/me'); 
+          setPersonalInfo({ 
+            displayName: data.display_name || user.displayName || '', 
+            age: data.age?.toString() || '', 
+            dob: data.dob || '' 
+          });
+          // TODO: Populate other fields from backend response when available
+          // setStudyStatus(data.study_status || '');
+          // setEducation(data.education || []);
+          // setExperience(data.experience || []);
+          // setCareerInterests(data.career_interests || { interestedFields: [], interests: [], blacklistedFields: [] });
+        } catch (error: any) {
+          toast({ title: 'Error fetching profile', description: error.message, variant: 'destructive' });
+        } finally {
+          setLoading(false);
+        }
       };
       fetchProfile();
     }
-  }, [user]);
+  }, [user, authenticatedFetch, toast]);
+
 
   const addEducationEntry = () => setEducation([...education, { id: Date.now().toString(), institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '' }]);
   const addExperienceEntry = () => setExperience([...experience, { id: Date.now().toString(), company: '', role: '', description: '', startDate: '', endDate: '' }]);
@@ -74,17 +84,35 @@ const ProfilePage = () => {
     if (!user) return;
     setLoading(true);
 
-    // TODO: Replace with authenticatedFetch('/users/me', { method: 'PUT', body: JSON.stringify(...) })
-    console.log("Saving profile data:", { personalInfo, studyStatus, education, experience, careerInterests });
-    await new Promise(res => setTimeout(res, 1000));
+    try {
+        const profileUpdateData = {
+            display_name: personalInfo.displayName,
+            age: personalInfo.age ? parseInt(personalInfo.age, 10) : undefined,
+            dob: personalInfo.dob || undefined,
+            // TODO: Add other fields to the payload once backend supports them
+            // study_status: studyStatus,
+            // education: education,
+            // experience: experience,
+            // career_interests: careerInterests,
+        };
+        
+        await authenticatedFetch('/profile/me', {
+            method: 'PUT',
+            body: JSON.stringify(profileUpdateData),
+        });
 
-    setLoading(false);
-    toast({ title: "Profile Updated Successfully!" });
+        toast({ title: "Profile Updated Successfully!" });
+    } catch (error: any) {
+        toast({ title: 'Error updating profile', description: error.message, variant: 'destructive' });
+    } finally {
+        setLoading(false);
+    }
   };
 
   if (loading && !personalInfo.displayName) return <div className="text-center p-24">Loading Your Profile...</div>;
   if (!user) return <div className="text-center p-24">Please log in to view your profile.</div>;
 
+  // The rest of the component's JSX remains the same
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-4xl mx-auto">

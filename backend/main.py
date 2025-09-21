@@ -11,7 +11,7 @@ app = FastAPI(
 # Configure CORS (Cross-Origin Resource Sharing)
 # This allows your Next.js frontend to communicate with the backend
 origins = [
-    "http://localhost:3000",  # The default Next.js dev server address
+    "http://localhost:8080",  # The default Next.js dev server address
     # Add your production frontend URL here later
 ]
 

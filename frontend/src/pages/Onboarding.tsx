@@ -3,18 +3,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'; // <-- IMPORT
 
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const authenticatedFetch = useAuthenticatedFetch(); // <-- USE THE HOOK
   
   const [age, setAge] = useState('');
   const [dob, setDob] = useState('');
@@ -34,15 +34,26 @@ const Onboarding = () => {
 
     setLoading(true);
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
+      // --- UPDATED LOGIC ---
+      const profileData = {
         age: parseInt(age, 10),
         dob,
+      };
+
+      await authenticatedFetch('/profile/me', {
+        method: 'PUT',
+        body: JSON.stringify(profileData),
       });
+      // --- END UPDATED LOGIC ---
+
       toast({ title: "Information saved successfully!" });
-      navigate('/dashboard');
-    } catch (error) {
-      toast({ title: "Failed to save information.", variant: "destructive" });
+      navigate('/profile'); // Go to profile to continue setup
+    } catch (error: any) {
+      toast({ 
+        title: "Failed to save information.",
+        description: error.message,
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -83,7 +94,7 @@ const Onboarding = () => {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save and Continue"}
+            {loading ? "Saving..." : "Save and Continue to Profile"}
           </Button>
         </form>
         

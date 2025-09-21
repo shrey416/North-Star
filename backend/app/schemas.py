@@ -1,10 +1,10 @@
 # backend/app/schemas.py
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import date
 from .models import ProficiencyLevel
 
-# --- Skill Schemas ---
+# --- Base Schemas ---
 class SkillBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -15,7 +15,6 @@ class Skill(SkillBase):
     class Config:
         orm_mode = True
 
-# --- UserSkill Schemas ---
 class UserSkillBase(BaseModel):
     skill_id: int
     level: ProficiencyLevel
@@ -30,7 +29,6 @@ class UserSkill(UserSkillBase):
     class Config:
         orm_mode = True
 
-# --- User Schemas ---
 class UserBase(BaseModel):
     email: EmailStr
     display_name: Optional[str] = None
@@ -51,13 +49,41 @@ class User(UserBase):
     class Config:
         orm_mode = True
 
-# --- Career Schemas ---
-class Career(BaseModel):
-    id: int
-    title: str
-    description: Optional[str] = None
+# --- Assessment Schemas (NEW/UPDATED) ---
 
+class QuestionOptionSchema(BaseModel):
+    id: int
+    option_text: str
+    
     class Config:
         orm_mode = True
 
-# ... Add other schemas for Roadmaps, Assessments etc.
+class AssessmentQuestionWithOptionsSchema(BaseModel):
+    id: int
+    question_text: str
+    options: List[QuestionOptionSchema]
+    
+    class Config:
+        orm_mode = True
+
+class AssessmentDetailsSchema(BaseModel):
+    id: int
+    title: str
+    skill_id: int
+    questions: List[AssessmentQuestionWithOptionsSchema]
+    
+    class Config:
+        orm_mode = True
+
+# Schema for the frontend to send answers
+class AssessmentSubmission(BaseModel):
+    answers: Dict[int, int]  # { question_id: selected_option_id }
+
+# Schema for the backend to respond with results
+class AssessmentResult(BaseModel):
+    score: int
+    total_questions: int
+    is_passed: bool
+    skill_id: int
+    is_verified: bool
+    message: str
